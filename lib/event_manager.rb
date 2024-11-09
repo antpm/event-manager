@@ -42,6 +42,19 @@ def save_thank_you_letter(id, form_letter)
   end
 end
 
+def clean_phone_number(phone)
+  cleaned = phone.tr('^0-9^', '')
+  unless cleaned.length == 10
+    return "Invalid Phone Number"
+  end
+
+  if cleaned[0] == 1 and cleaned.length == 11
+    return cleaned[1..10]
+  else
+    return cleaned
+  end
+end
+
 puts 'Event Manager Initialized'
 if File.exist? 'event_attendees.csv'
   template_letter = File.read('form_letter.erb')
@@ -50,11 +63,14 @@ if File.exist? 'event_attendees.csv'
   contents.each do |row|
     id = row[0]
     name = row[:first_name]
+    phone = clean_phone_number(row[:homephone])
     zip = clean_zip(row[:zipcode])
     legislators = legislator_by_zip(zip)
     form_letter = erb_template.result(binding)
 
-    save_thank_you_letter(id,form_letter)
+    #save_thank_you_letter(id,form_letter)
+    puts "#{id} #{phone}"
+    
     
   end
 else
