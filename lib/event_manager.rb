@@ -1,6 +1,7 @@
 require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
+require 'time'
 
 def clean_zip(zip)
   # if zip.nil?
@@ -55,24 +56,33 @@ def clean_phone_number(phone)
   end
 end
 
+def tally_registration_times(registrations)
+  hours = Hash.new(0)
+  registrations.each do |register|
+    time = Time.strptime(register, "%m/%d/%Y %k:%M")
+    hours[time.strftime("%k")] += 1
+  end
+  hours
+end
+
 puts 'Event Manager Initialized'
 if File.exist? 'event_attendees.csv'
   template_letter = File.read('form_letter.erb')
   erb_template = ERB.new template_letter
   contents = CSV.open('event_attendees.csv', headers: true, header_converters: :symbol)
+  registrations = []
   contents.each do |row|
     id = row[0]
     name = row[:first_name]
     phone = clean_phone_number(row[:homephone].to_s)
     zip = clean_zip(row[:zipcode])
+    registrations.append(row[:regdate])
     legislators = legislator_by_zip(zip)
     form_letter = erb_template.result(binding)
-
     #save_thank_you_letter(id,form_letter)
-    #puts "#{id} #{phone}"
-    
-    
   end
+  registration_hours = tally_registration_times(registrations)
+  
 else
   'File Not Found'
 end
