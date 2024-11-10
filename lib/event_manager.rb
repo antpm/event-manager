@@ -2,6 +2,7 @@ require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
 require 'time'
+require 'date'
 
 def clean_zip(zip)
   # if zip.nil?
@@ -56,13 +57,24 @@ def clean_phone_number(phone)
   end
 end
 
-def tally_registration_times(registrations)
+def tally_registration_hours(registrations)
   hours = Hash.new(0)
   registrations.each do |register|
     time = Time.strptime(register, "%m/%d/%Y %k:%M")
     hours[time.strftime("%k")] += 1
   end
-  hours
+  sorted_hours = hours.sort_by { |_, value| -value }.to_h
+  sorted_hours
+end
+
+def tally_registration_days(registrations)
+  days = Hash.new(0)
+  registrations.each do |register|
+    date = Date.strptime(register, "%D")
+    days[Date::DAYNAMES[date.wday]] += 1
+  end
+  sorted_days = days.sort_by {|_, value| -value}.to_h
+  sorted_days
 end
 
 puts 'Event Manager Initialized'
@@ -81,7 +93,11 @@ if File.exist? 'event_attendees.csv'
     form_letter = erb_template.result(binding)
     #save_thank_you_letter(id,form_letter)
   end
-  registration_hours = tally_registration_times(registrations)
+  registration_hours = tally_registration_hours(registrations)
+  registration_days = tally_registration_days(registrations)
+  p registration_hours
+  p registration_days
+
   
 else
   'File Not Found'
